@@ -1,0 +1,28 @@
+# folder upload exclusion
+
+out/
+rootfs/
+src/
+
+# 1. 컴파일 결과물 및 목적 파일 (Object files)
+*.o
+*.obj
+
+# 2. 정적/동적 라이브러리 파일
+*.a
+*.lib
+*.so
+*.dll
+*.dylib
+
+# 3. 프리컴파일드 헤더 및 디버그 기호
+*.gch
+*.pch
+*.d
+*.pdb
+
+# 4. OS가 생성하는 임시 파일 (Mac/Windows)
+.DS_Store
+Thumbs.db
+
+*.tar.xz
