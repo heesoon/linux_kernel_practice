@@ -1,4 +1,4 @@
-# 🚀 Linux Kernel & QEMU Workspace
+# 🐧 Linux Kernel & QEMU Workspace
 
 <p align="left">
   <img src="https://shields.io" alt="Linux">
@@ -6,47 +6,43 @@
   <img src="https://shields.io" alt="QEMU">
 </p>
 
-> Git에서 리눅스 커널과 BusyBox 소스코드를 받아 로컬 또는 도커 컨테이너 환경에서 빌드하고, QEMU 가상 머신으로 가볍고 빠르게 부팅하는 자동화 작업 공간입니다.
+> A minimal automated workspace designed to fetch Linux Kernel & BusyBox source code, build custom images via host or Docker container, and emulate the environment instantly using QEMU.
 
 ---
 
-## 📂 프로젝트 디렉토리 구조 (Directory Structure)
+## 📂 Project Architecture
 
-### 📌 1. 최상위 디렉토리 및 파일 구성
 ```text
 linux_workspace/
-├── ⚙️ build.sh              # [실행] 로컬 커널 및 소스 빌드 스크립트
-├── 🐳 container_build.sh    # [실행] 도커 컨테이너 기반 빌드 스크립트
-├── 📄 dockerfile            # 컨테이너 빌드 환경 정의 파일
-├── 🖥️ qemu_run.sh           # [실행] 빌드된 이미지를 QEMU로 구동하는 스크립트
-├── 📦 src/                  # 리눅스 커널 및 소스 코드 저장 디렉토리
-├── 📁 rootfs/               # 초기 파일 시스템(Root Filesystem) 구성 폴더
-└── 📤 out/                  # 빌드 결과물(커널 이미지 등) 저장 폴더
-```
-
-### 📁 2. `src/` 하위 디렉토리 상세
-```text
-./src/
-├── 📦 busybox-1.38.0/       # BusyBox 소스 코드 및 빌드 공간
-└── 🐧 linux-7.2.6/          # 리눅스 커널 메인 소스 트리
+├── build.sh             # Host-level kernel and rootfs compilation script
+├── container_build.sh   # Containerized build environment script
+├── dockerfile           # Docker isolation environment configuration
+├── qemu_run.sh          # QEMU emulation launcher with custom args
+├── out/                 # Compiled kernel bzImage and final artifacts target
+├── rootfs/              # Skeleton directory for the initial root filesystem
+└── src/                 # Main upstream source trees
+    ├── busybox-1.38.0/  # Vanilla BusyBox source directory
+    └── linux-7.2.6/     # Mainline Linux kernel repository
 ```
 
 ---
 
-## 🚀 시작하기 (Quick Start)
+## 🚀 Getting Started
 
-### 🛠️ 빌드하기
-원하는 환경에 맞춰 아래 스크립트 중 하나를 실행합니다.
+### Prerequisites
+Ensure your host machine has the required toolchains installed:
 ```bash
-# 로컬 빌드 환경 이용 시
-./build.sh
-
-# 도커 컨테이너 환경 이용 시
-./container_build.sh
+sudo apt-get update && sudo apt-get install -y qemu-system-x86 build-essential
 ```
 
-### 🖥️ QEMU 실행하기
-컴파일이 완료되면 `out/` 폴더에 생성된 이미지를 기반으로 가상 머신을 띄웁니다.
+### Usage
+Run the compilation flow and bootstrap the kernel inside QEMU:
+
 ```bash
+# Step 1: Build the kernel and rootfs (Choose one)
+./build.sh            # Local host build
+./container_build.sh  # Docker container build
+
+# Step 2: Emulate via QEMU
 ./qemu_run.sh
 ```
