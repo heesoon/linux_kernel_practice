@@ -1,10 +1,8 @@
 # 🐧 Linux Kernel & QEMU Workspace
 
-<p align="left">
-  <img src="https://shields.io" alt="Linux">
-  <img src="https://shields.io" alt="Docker">
-  <img src="https://shields.io" alt="QEMU">
-</p>
+[![Linux](https://shields.io)](https://kernel.org)
+[![Docker](https://shields.io)](https://docker.com)
+[![QEMU](https://shields.io)](https://qemu.org)
 
 > A minimal automated workspace designed to fetch Linux Kernel & BusyBox source code, build custom images via host or Docker container, and emulate the environment instantly using QEMU.
 
