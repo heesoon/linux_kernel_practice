@@ -1,0 +1,10 @@
+#!/bin/sh
+# devtmpfs must be available before init opens the serial terminal.
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+export HOME=/root
+mount -t devtmpfs devtmpfs /dev || {
+    echo "ERROR: cannot mount /dev" >&2
+    # Keep PID 1 alive even if emergency shells exit.
+    while :; do /bin/sh; sleep 1; done
+}
+exec /sbin/init

@@ -1,7 +1,21 @@
 #!/bin/bash
 set -e
 
+cd "$(dirname "$0")"
+
+# macOS에서 직접 호출해도 Linux 빌드 도구는 Docker 안에서 실행합니다.
+if [ "$(uname -s)" = "Darwin" ]; then
+    echo "👉 macOS에서 실행되었습니다. Docker 빌드를 시작합니다."
+    exec /bin/bash ./build.sh
+fi
+
 echo "👉 [도커 내부] 빌드 작업을 시작합니다."
+for source_dir in src/busybox-1.38.0 src/linux-7.2.6; do
+    if [ ! -d "$source_dir" ]; then
+        echo "❌ 소스 디렉터리가 없습니다: $source_dir" >&2
+        exit 1
+    fi
+done
 mkdir -p out
 
 # --------------------------------------------------
@@ -18,32 +32,26 @@ if [ -d "src/busybox-1.38.0" ]; then
     cd src/busybox-1.38.0
     make defconfig
     # 정적 빌드 옵션 활성화
-    sed -i 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/' .config
+    for option in STATIC INIT FEATURE_USE_INITTAB FEATURE_INIT_SCTTY; do
+        sed "s/^# CONFIG_${option} is not set/CONFIG_${option}=y/" .config > .config.tmp
+        mv .config.tmp .config
+        grep -qx "CONFIG_${option}=y" .config || {
+            echo "❌ BusyBox 필수 설정 누락: CONFIG_${option}" >&2
+            exit 1
+        }
+    done
     make -j$(nproc) install CONFIG_PREFIX=../../rootfs
     cd ../..
     echo "✅ [도커 내부] BusyBox 1.38.0 설치 완료!"
 else
-    echo "⚠️ [안내] src/busybox-1.38.0 폴더가 없어 기본 쉘만 링크합니다."
-    ln -sf /bin/sh rootfs/bin/sh
+    echo "❌ BusyBox 소스가 없습니다." >&2
+    exit 1
 fi
 
-# 고도화된 init 파일 생성
-echo "📝 [도커 내부] init 스크립트 생성..."
-cat << 'EOF' > rootfs/init
-#!/bin/sh
-mount -t proc none /proc
-mount -t sysfs none /sys
-mount -t devtmpfs none /dev 2>/dev/null || true
-
-echo ""
-echo "=========================================="
-echo "    WELCOME TO MY BUSYBOX 1.38.0 LINUX    "
-echo "=========================================="
-echo ""
-
-exec /bin/sh
-EOF
-chmod +x rootfs/init
+# Git으로 관리하는 초기화 파일을 rootfs에 설치
+# /init → BusyBox init(PID 1) → inittab → rcS → 콘솔 셸
+cp -R rootfs-overlay/. rootfs/
+chmod +x rootfs/init rootfs/etc/init.d/rcS
 
 # initramfs 압축 패키징
 echo "📦 [도커 내부] initramfs.cpio.gz 생성..."

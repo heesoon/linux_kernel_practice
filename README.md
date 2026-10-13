@@ -24,7 +24,7 @@
   │              └─ Linux ARM64 빌드 → out/Image
   │
   └─ bash qemu_run.sh
-       └─ QEMU ARM64 virt 머신 → /init → BusyBox 셸
+       └─ QEMU ARM64 virt 머신 → /init → BusyBox init → rcS → 콘솔 셸
 ```
 
 | 구성 요소 | 현재 설정 |
@@ -51,6 +51,7 @@ linux_workspace/
 ├── src/                      # 별도로 준비하는 소스; Git 제외
 │   ├── busybox-1.38.0/
 │   └── linux-7.2.6/
+├── rootfs-overlay/           # Git으로 관리하는 /init, inittab, rcS
 ├── rootfs/                   # 빌드 때 다시 생성되는 루트 파일시스템; Git 제외
 └── out/                      # 최종 산출물; Git 제외
     ├── Image
@@ -101,20 +102,22 @@ tar -xf src/busybox-1.38.0.tar.bz2 -C src
 
 원본 압축 파일을 별도로 보관한 경우에도 `src/`에 압축을 해제하면 됩니다. 다른 버전을 사용하려면 디렉터리 이름만 바꾸지 말고 `container_build.sh`의 소스 경로와 관련 표기도 함께 수정합니다.
 
-### 3. Dockerfile 이름 확인
+### 3. 초기화 구성 확인
 
-현재 저장소의 파일 이름은 소문자 `dockerfile`이고, `build.sh`는 `docker build -t linux-builder-env .`를 실행합니다. 대소문자를 구분하는 환경에서 재사용하려면 `build.sh`의 해당 줄을 다음과 같이 수정해 파일 이름을 명시합니다.
+`rootfs-overlay/`의 파일은 빌드할 때 rootfs로 복사됩니다.
 
-```bash
-docker build -f dockerfile -t "$IMAGE_NAME" .
-```
+- `/init`: `/dev`를 마운트하고 `exec /sbin/init`으로 BusyBox init을 PID 1로 실행합니다.
+- `/etc/inittab`: `sysinit`으로 `rcS`를 한 번 실행한 뒤 `ttyAMA0`에서 콘솔 셸을 시작합니다.
+- `/etc/init.d/rcS`: `/proc`, `/sys`, 임시 디렉터리를 준비하고 배너를 출력합니다.
 
-Docker의 기본 파일 이름은 `Dockerfile`입니다. 위 수정은 macOS와 Linux에서 동일한 파일 이름을 사용하기 위한 준비 단계입니다.
+`ttyAMA0::respawn:/bin/sh` 설정에 따라 셸에서 `exit`하면 init은 살아 있는 상태로 새 셸을 실행합니다. 인증 없는 개발용 콘솔입니다. systemd는 사용하지 않습니다.
 
 ### 4. 커널과 initramfs 빌드
 
 ```bash
 bash build.sh
+# 또는: macOS에서는 같은 Docker 빌드로 자동 연결됩니다.
+bash container_build.sh
 ```
 
 `build.sh`는 다음 작업을 순서대로 수행합니다.
@@ -159,11 +162,11 @@ mount
 ls /bin
 ```
 
-**QEMU 종료:** `Ctrl+A`를 누른 뒤 키를 놓고 `X`를 누릅니다. `/bin/sh`가 PID 1로 실행되므로 셸에서 `exit`를 실행하면 커널 패닉이 발생할 수 있습니다.
+**QEMU 종료:** `Ctrl+A`를 누른 뒤 키를 놓고 `X`를 누릅니다. 셸에서 `exit`하면 BusyBox init이 새 셸을 실행합니다. 게스트 종료에는 `poweroff`를 사용합니다.
 
 ## 부팅 이미지와 QEMU 설정
 
-`rootfs/init`은 `/proc`, `/sys`, `/dev`를 마운트한 뒤 `exec /bin/sh`로 셸을 시작합니다. `/dev` 마운트 실패는 현재 스크립트에서 무시됩니다.
+`rootfs/init`은 `/dev`를 준비하고 BusyBox init을 실행합니다. init은 `/etc/inittab`에 따라 `rcS` 실행과 콘솔 셸 재시작, 종료 작업을 관리합니다.
 
 `qemu_run.sh`의 실행 명령은 다음과 같습니다.
 
@@ -188,7 +191,7 @@ qemu-system-aarch64 -M virt -cpu cortex-a57 -m 1024M \
 
 ## 다른 환경에서 재사용하기
 
-Git으로 관리하는 항목은 README, 빌드 스크립트, Docker 설정, `.gitignore`입니다. `src/`, `rootfs/`, `out/`는 복제 후 다시 준비하거나 생성합니다.
+Git으로 관리하는 항목은 README, 빌드 스크립트, Docker 설정, `rootfs-overlay/`, `.gitignore`입니다. `src/`, `rootfs/`, `out/`는 복제 후 다시 준비하거나 생성합니다.
 
 - **Apple Silicon macOS:** ARM64 컨테이너에서 빌드하고 호스트 QEMU로 실행하는 기본 구성입니다.
 - **ARM64 Linux:** Docker와 호스트 QEMU가 필요합니다. bind mount 디렉터리에 컨테이너 사용자가 쓸 수 있는지 확인합니다.
@@ -202,7 +205,7 @@ Docker는 `developer` 사용자로 빌드하지만 호스트 UID/GID를 자동�
 
 - **커널 설정:** `container_build.sh`의 `make defconfig` 이후에 설정 변경 단계를 추가합니다. 현재는 매번 기본 설정을 생성하므로 소스 디렉터리의 `.config`만 수동으로 수정하면 다음 빌드에서 덮어써집니다.
 - **BusyBox 설정:** BusyBox도 매번 `make defconfig`를 실행하며 `CONFIG_STATIC=y`를 적용합니다. 추가 설정은 그 이후에 반영합니다.
-- **초기화 동작:** `container_build.sh` 안의 `/init` 생성 부분을 수정합니다.
+- **초기화 동작:** `rootfs-overlay/init`, `rootfs-overlay/etc/inittab`, `rootfs-overlay/etc/init.d/rcS`를 수정하고 다시 빌드합니다.
 - **루트 파일 추가:** initramfs 패키징 전에 파일을 복사하는 단계를 추가합니다. `rootfs/`는 빌드 시작 시 삭제·재생성되므로 수동으로 넣은 파일은 다음 빌드에서 사라집니다.
 
 소스 트리의 기존 빌드 결과는 유지되지만 빌드 설정과 rootfs는 다시 생성됩니다. 독립적인 여러 작업을 동시에 실행하면 고정된 컨테이너 이름이 충돌하므로 이름을 분리해야 합니다.
@@ -214,7 +217,7 @@ Docker는 `developer` 사용자로 빌드하지만 호스트 UID/GID를 자동�
 | Docker 데몬 연결 오류 | Docker 엔진을 시작하고 `docker info` 확인 |
 | Dockerfile을 찾지 못함 | 저장소 최상위에서 실행하고 `build.sh`에 `-f dockerfile` 명시 |
 | `src/linux-7.2.6`을 찾지 못함 | 소스 다운로드·압축 해제 및 디렉터리 이름 확인 |
-| BusyBox가 없는데 initramfs가 생성됨 | BusyBox 소스를 준비하고 다시 빌드. 현재 대체 처리는 `/bin/sh`가 자기 자신을 가리키는 링크여서 부팅 가능한 셸을 제공하지 않음 |
+| BusyBox가 없는데 initramfs가 생성됨 | 현재 빌드는 BusyBox 소스가 없으면 즉시 중단. 소스 디렉터리를 준비하고 다시 실행 |
 | `Permission denied` | 컨테이너 `developer` 사용자와 bind mount 디렉터리 권한 확인 |
 | 컴파일 중 프로세스 종료 / 메모리 부족 | Docker 메모리 할당을 늘리거나 스크립트의 `make -j` 병렬 수 축소 |
 | `qemu-system-aarch64: command not found` | 호스트에 QEMU 설치 후 PATH 확인 |

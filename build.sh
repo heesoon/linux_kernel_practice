@@ -3,10 +3,11 @@ set -e
 
 IMAGE_NAME="linux-builder-env"
 CONTAINER_NAME="linux-builder-run"
-WORKSPACE_DIR="$(pwd)"
+WORKSPACE_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$WORKSPACE_DIR"
 
 echo "🚀 [1/4] 도커 빌드 환경 이미지 생성/업데이트 중..."
-docker build -t $IMAGE_NAME .
+docker build -f dockerfile -t "$IMAGE_NAME" .
 
 echo "📦 [2/4] 기존 잔여 컨테이너 정리..."
 docker rm -f $CONTAINER_NAME 2>/dev/null || true
