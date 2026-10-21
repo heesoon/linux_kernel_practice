@@ -16,6 +16,13 @@ echo "📦 [2/5] 기존 잔여 컨테이너 및 캐시 볼륨 확인..."
 docker rm -f $CONTAINER_NAME 2>/dev/null || true
 docker volume create $VOLUME_NAME > /dev/null
 
+# 명명 볼륨은 기본적으로 root 소유여서 developer의 git clone이 Permission denied로 실패합니다.
+# 빌드 전에 캐시 볼륨의 최상위 디렉터리만 developer 소유로 변경합니다.
+# 실제 소스 다운로드와 컴파일은 기존처럼 일반 사용자 developer로 실행합니다.
+docker run --rm --user root \
+  -v "$VOLUME_NAME":/build_fast \
+  "$IMAGE_NAME" /bin/sh -c 'chown developer:developer /build_fast'
+
 echo "🛠️ [3/5] 도커 컨테이너 구동 및 Buildroot 컴파일 시작..."
 # 스크립트와 아웃풋 제어를 위해 워크스페이스를 마운트하되, 
 # 실제 Buildroot 소스 다운로드와 헤비한 컴파일은 컨테이너 전용 고속 볼륨(/build_fast) 내에서 수행합니다.
