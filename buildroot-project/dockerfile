@@ -32,7 +32,9 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     sed \
-    which \
+    # which \
+    # Ubuntu 22.04에는 which 독립 패키지가 없어 설치가 실패하므로, which 명령을 제공하는 debianutils로 교체합니다.
+    debianutils \
     && apt-get clean
 
 # 4. 일반 사용자 계정 생성 (맥북 호스트와 파일 권한 꼬임 방지)
