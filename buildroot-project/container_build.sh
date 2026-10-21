@@ -4,8 +4,8 @@ set -e
 echo "📥 [Inside Docker] Buildroot 최신 소스 다운로드 확인 중..."
 cd /build_fast
 if [ ! -d "buildroot" ]; then
-    # 최신 안정화 버전을 받거나 master 얕은 복사
-    git clone https://github.com --depth=1
+    # 기본 브랜치의 최신 개발 소스를 얕은 복사로 다운로드
+    git clone --depth=1 https://gitlab.com/buildroot.org/buildroot.git buildroot
 fi
 
 cd buildroot
