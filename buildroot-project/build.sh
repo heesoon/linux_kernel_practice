@@ -26,7 +26,17 @@ docker run --rm --user root \
 echo "🛠️ [3/5] 도커 컨테이너 구동 및 Buildroot 컴파일 시작..."
 # 스크립트와 아웃풋 제어를 위해 워크스페이스를 마운트하되, 
 # 실제 Buildroot 소스 다운로드와 헤비한 컴파일은 컨테이너 전용 고속 볼륨(/build_fast) 내에서 수행합니다.
-docker run --name $CONTAINER_NAME \
+# 기존: docker run --name $CONTAINER_NAME
+# 설정 파일이 없을 때 menuconfig를 사용할 수 있도록 대화형 터미널을 연결합니다.
+# 자동 실행 환경에서는 TTY 옵션을 생략합니다.
+DOCKER_TERMINAL_ARGS=()
+if [ -t 0 ] && [ -t 1 ]; then
+  DOCKER_TERMINAL_ARGS=(-it)
+elif [ ! -f "$WORKSPACE_DIR/configs/buildroot_defconfig" ]; then
+  echo "❌ 설정 파일이 없습니다. 터미널에서 실행하여 menuconfig를 설정하세요." >&2
+  exit 1
+fi
+docker run "${DOCKER_TERMINAL_ARGS[@]}" --name "$CONTAINER_NAME" \
   -v "$WORKSPACE_DIR":/home/developer \
   -v "$VOLUME_NAME":/build_fast \
   $IMAGE_NAME /bin/bash /home/developer/container_build.sh
@@ -34,11 +44,22 @@ docker run --name $CONTAINER_NAME \
 echo "🚚 [4/5] 가상 내부 볼륨에서 완성된 최종 산출물(out/) 추출 중..."
 # 컴파일 완료 후 컨테이너 내부 내부 가속 공간에서 나온 핵심 이미지들만 호스트 out/ 폴더로 복사합니다.
 mkdir -p ./out
-docker cp $CONTAINER_NAME:/build_fast/buildroot/output/images/Image ./out/Image 2>/dev/null || true
-docker cp $CONTAINER_NAME:/build_fast/buildroot/output/images/rootfs.ext4 ./out/rootfs.ext4 2>/dev/null || true
+# 이전 실행에서 복사된 심볼릭 링크는 제거하고 실제 파일을 받을 자리를 만듭니다.
+for artifact in ./out/Image ./out/rootfs.ext4; do
+  if [ -L "$artifact" ]; then
+    unlink "$artifact"
+  fi
+done
+# 기존: docker cp $CONTAINER_NAME:/build_fast/buildroot/output/images/Image ./out/Image 2>/dev/null || true
+# 복사 실패를 숨기지 않으며, 심볼릭 링크 대신 실제 산출물 내용을 복사합니다.
+docker cp -L "$CONTAINER_NAME:/build_fast/buildroot/output/images/Image" "./out/Image"
+# 기존: docker cp $CONTAINER_NAME:/build_fast/buildroot/output/images/rootfs.ext4 ./out/rootfs.ext4 2>/dev/null || true
+# 복사 실패를 숨기지 않으며, 심볼릭 링크 대신 실제 산출물 내용을 복사합니다.
+docker cp -L "$CONTAINER_NAME:/build_fast/buildroot/output/images/rootfs.ext4" "./out/rootfs.ext4"
 
 echo "🧹 [5/5] 사용이 끝난 임시 컨테이너 및 찌꺼기 청소..."
 docker rm -f $CONTAINER_NAME
-docker image prune -f
+# docker image prune -f
+# 다른 프로젝트의 dangling 이미지까지 삭제하므로 전역 이미지 정리를 생략합니다.
 
 echo "🎉 과정이 깔끔하게 완료되었습니다! 'out' 폴더의 Image와 rootfs.ext4를 확인하세요."

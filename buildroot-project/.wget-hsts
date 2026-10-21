@@ -1,0 +1,18 @@
+# HSTS 1.0 Known Hosts database for GNU Wget.
+# Edit at your own risk.
+# <hostname>	<port>	<incl. subdomains>	<created>	<max-age>
+www.mpfr.org	0	1	1792599338	31536000
+www.kernel.org	0	0	1792600330	31557600
+snapshot.debian.org	0	0	1792599215	15768000
+www.python.org	0	1	1792600236	63072000
+python.org	0	0	1792600236	315360000
+cmake.org	0	1	1792599965	31536000
+cdn.kernel.org	0	0	1792600465	31557600
+www.zlib.net	0	1	1792599038	63072000
+codeload.github.com	0	0	1792600350	31536000
+www.busybox.net	0	0	1792600416	63072000
+matt.ucc.asn.au	0	0	1792600456	5184000
+www.iana.org	0	0	1792600506	48211200
+files.pythonhosted.org	0	1	1792600484	31536000
+github.com	0	1	1792600508	31536000
+data.iana.org	0	0	1792600506	48211200
