@@ -20,10 +20,30 @@ fi
 
 # B. Linux Kernel 자동 다운로드 (고속 볼륨 내부에서 수행)
 KERNEL_DIR="src/linux-7.3"
-if [ ! -d "$KERNEL_DIR" ]; then
-    echo "🌐 [도커 내부] 리눅스 커널 소스코드가 없습니다. Git에서 가져오는 중..."
-    git clone -b v7.3 --single-branch --depth 1 --progress https://github.com/torvalds/linux.git "$KERNEL_DIR"
+
+# [핵심 수정] 폴더는 존재하지만 안에 핵심 파일(Makefile)이 없다면 다운로드 실패작으로 간주하고 강제 삭제
+if [ -d "$KERNEL_DIR" ] && [ ! -f "$KERNEL_DIR/Makefile" ]; then
+    echo "⚠️  [도커 내부] 기존 커널 폴더가 비어있거나 손상되었습니다. 삭제 후 재시도합니다."
+    rm -rf "$KERNEL_DIR"
 fi
+
+# 커널 소스가 없을 때만 다운로드 수행
+if [ ! -d "$KERNEL_DIR" ]; then
+    echo "🌐 [도커 내부] 리눅스 커널 소스코드를 Git에서 가져오는 중 (v7.3)..."
+    
+    # --depth 1 외에 다운로드 안정성을 높이기 위한 추가 옵션 부여
+    # (공식 torvalds/linux 저장소는 브랜치가 아니라 '태그'이므로 -b 대신 정확히 v7.3 지정)
+    git clone --branch v7.3 --single-branch --depth 1 \
+              --config pack.windowMemory=10m --config pack.packSizeLimit=20m \
+              --progress https://github.com "$KERNEL_DIR"
+              
+    # 다운로드가 성공했는지 한 번 더 검증
+    if [ ! -f "$KERNEL_DIR/Makefile" ]; then
+        echo "❌ [도커 내부 에러] 리눅스 커널 다운로드에 실패했습니다. 네트워크를 확인하세요."
+        exit 1
+    fi
+fi
+
 
 # --------------------------------------------------
 # 램디스크(Minimal RootFS) 기본 구조 생성
