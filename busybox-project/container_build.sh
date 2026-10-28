@@ -35,7 +35,7 @@ if [ ! -d "$KERNEL_DIR" ]; then
     # (공식 torvalds/linux 저장소는 브랜치가 아니라 '태그'이므로 -b 대신 정확히 v7.3 지정)
     git clone --branch v7.3 --single-branch --depth 1 \
               --config pack.windowMemory=10m --config pack.packSizeLimit=20m \
-              --progress https://github.com "$KERNEL_DIR"
+              --progress https://github.com/torvalds/linux.git "$KERNEL_DIR"
               
     # 다운로드가 성공했는지 한 번 더 검증
     if [ ! -f "$KERNEL_DIR/Makefile" ]; then
