@@ -22,7 +22,7 @@ fi
 KERNEL_DIR="src/linux-7.2.6"
 if [ ! -d "$KERNEL_DIR" ]; then
     echo "🌐 [도커 내부] 리눅스 커널 소스코드가 없습니다. Git에서 가져오는 중..."
-    git clone --depth 1 --branch v6.6 https://kernel.org "$KERNEL_DIR"
+    git clone --depth 1 --branch linux-7.2.y https://kernel.org "$KERNEL_DIR"
 fi
 
 # --------------------------------------------------
