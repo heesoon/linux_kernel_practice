@@ -19,10 +19,10 @@ if [ ! -d "$BUSYBOX_DIR" ]; then
 fi
 
 # B. Linux Kernel 자동 다운로드 (고속 볼륨 내부에서 수행)
-KERNEL_DIR="src/linux-7.2.6"
+KERNEL_DIR="src/linux-7.3"
 if [ ! -d "$KERNEL_DIR" ]; then
     echo "🌐 [도커 내부] 리눅스 커널 소스코드가 없습니다. Git에서 가져오는 중..."
-    git clone --depth 1 --branch v7.2.6 https://github.com/torvalds/linux.git "$KERNEL_DIR"
+    git clone -b v7.3 --single-branch --depth 1 https://github.com/torvalds/linux.git "$KERNEL_DIR"
 fi
 
 # --------------------------------------------------
