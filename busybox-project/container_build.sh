@@ -44,11 +44,37 @@ done
 make -j$(nproc) install CONFIG_PREFIX=../../rootfs
 cd ../..
 
-# ✨ 주의: 덮어쓸 오버레이 설정 파일은 맥북 호스트 영역에서 안전하게 가져옵니다.
+# --------------------------------------------------
+# ✨ [오류 수정] 오버레이 설정 파일 반영 및 누락 방지 자동 생성
+# --------------------------------------------------
+# 1. 만약 맥북 호스트 영역에 rootfs-overlay 폴더가 있다면 정상 복사
 if [ -d "$HOST_WORKSPACE/rootfs-overlay" ]; then
+    echo "📂 [도커 내부] 호스트의 rootfs-overlay 설정을 복사합니다."
     cp -R $HOST_WORKSPACE/rootfs-overlay/. rootfs/
-    chmod +x rootfs/init rootfs/etc/init.d/rcS
 fi
+
+# 2. 만약 복사 후에도 rcS 파일이 없다면 (맥북에 폴더가 없었거나 비어있던 경우) 빌드 에러 방지를 위해 기본 생성
+if [ ! -f "rootfs/etc/init.d/rcS" ]; then
+    echo "⚠️  [도커 내부] rootfs/etc/init.d/rcS 파일이 없어 기본 초기화 스크립트를 자동 생성합니다."
+    cat << 'EOF' > rootfs/etc/init.d/rcS
+#!/bin/sh
+mount -t proc none /proc
+mount -t sysfs none /sys
+/bin/sh
+EOF
+fi
+
+# 3. 만약 복사 후에도 상위 init 파일이 없다면 기본 생성
+if [ ! -f "rootfs/init" ]; then
+    echo "⚠️  [도커 내부] rootfs/init 파일이 없어 기본 init 스크립트를 자동 생성합니다."
+    cat << 'EOF' > rootfs/init
+#!/bin/sh
+exec /sbin/init
+EOF
+fi
+
+# 파일들이 무조건 존재하므로 더 이상 '파일이 없다'는 권한 오류(chmod)가 나지 않습니다.
+chmod +x rootfs/init rootfs/etc/init.d/rcS
 
 # initramfs 압축 패키징
 echo "📦 [도커 내부] initramfs.cpio.gz 생성..."
