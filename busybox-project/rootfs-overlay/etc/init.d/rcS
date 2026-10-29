@@ -34,8 +34,7 @@ for script in /etc/init.d/S??*; do
     fi
 done
 
-# 내가 만든 프로그램 자동 실행
-/bin/sys_test_app &
+# 내가 만든 프로그램 자동 실행 코드는 제거합니다. (inittab의 respawn이 대신 켜줍니다)
 
-# 그 후 기본 콘솔 셸 실행
-exec /bin/sh
+# 기본 콘솔 셸 실행 코드(exec /bin/sh)를 제거하고 시스템 부팅 완료 메시지로 대체합니다.
+echo "🚀 All Core System Services are Ready."
