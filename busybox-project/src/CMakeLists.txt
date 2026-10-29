@@ -1,11 +1,12 @@
+# src/CMakeLists.txt
 cmake_minimum_required(VERSION 3.10)
+project(LinuxUserApplications CXX)
 
-# 프로젝트 이름 및 언어 설정
-project(LinuxUserApplications LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
 
-# C++11 표준 요구 (모던 C++ 문법 사용)
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+# 🔥 [핵심] 미니멀 램디스크 환경을 위해 전체 프로젝트에 정적 링크를 강제합니다.
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static") 
+set(BUILD_SHARED_LIBS OFF)
 
+# 하위 앱 디렉터리 연결
 add_subdirectory(app)
