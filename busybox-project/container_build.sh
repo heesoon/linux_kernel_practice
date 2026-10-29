@@ -81,44 +81,13 @@ cd $FAST_VOLUME
 echo "📦 [3/5] 램디스크(RootFS) 시스템 디렉터리 구성..."
 
 cd "$ROOTFS_DIR"
-mkdir -p dev etc proc sys root etc/init.d
-
 # 호스트의 rootfs-overlay(우리가 방금 빌드한 정적 바이너리 포함)가 있으면 덮어쓰기
 if [ -d "$HOST_WORKSPACE/rootfs-overlay" ]; then
     echo "📂 호스트의 rootfs-overlay 설정을 반영합니다."
     cp -R $HOST_WORKSPACE/rootfs-overlay/. ./
+    # 실행 권한 부여
+    chmod +x init etc/init.d/rcS etc/init.d/rcK
 fi
-
-# ⚠️ [수정 핵심] rcS 초기화 스크립트 작성 및 사용자 앱 백그라운드(&) 실행 보장
-echo "📝 기본 초기화 스크립트(rcS) 생성 중..."
-cat << 'EOF' > etc/init.d/rcS
-#!/bin/sh
-mount -t proc none /proc
-mount -t sysfs none /sys
-
-echo "🚀 Starting System Services..."
-# 앱 이름 뒤에 '&'를 붙여 백그라운드로 실행되므로, 루프에 갇히지 않고 다음 줄(Shell)로 넘어갑니다.
-if [ -f "/bin/sys_test_app" ]; then
-    /bin/sys_test_app &
-fi
-
-# 필요 시 새로운 서비스 추가 가능
-# if [ -f "/bin/service1" ]; then /bin/service1 & fi
-
-echo "🔓 Entering Interactive Shell..."
-/bin/sh
-EOF
-
-# 기본 init 스크립트가 없을 경우 보완 생성
-if [ ! -f "init" ]; then
-    cat << 'EOF' > init
-#!/bin/sh
-exec /sbin/init
-EOF
-fi
-
-# 실행 권한 부여
-chmod +x init etc/init.d/rcS
 
 # initramfs.cpio.gz 압축 패키징 수행
 echo "🗜️ initramfs.cpio.gz 아카이브 생성 중..."
