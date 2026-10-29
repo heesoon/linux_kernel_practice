@@ -45,6 +45,7 @@ int main() {
     switch (received_signal_num) {
         case SIGINT:  std::cout << "(SIGINT - 인터럽트/Ctrl+C)" << std::endl; break;
         case SIGTERM: std::cout << "(SIGTERM - 소프트웨어 종료 요청)" << std::endl; break;
+        case SIGUSR2: std::cout << "(SIGUSR2 - poweroff 요청)" << std::endl; break;
         default:      std::cout << "(Unknown Signal)" << std::endl; break;
     }
     std::cout << "[⚙️ Daemon] Cleaning up and Gracefully Shutting Down..." << std::endl;
