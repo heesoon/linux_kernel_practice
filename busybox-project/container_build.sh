@@ -33,6 +33,7 @@ if [ ! -f "$SRC_DIR/CMakeLists.txt" ]; then
 fi
 
 # 도커 가속 공간에서 빌드 수행
+rm -rf "$APP_BUILD_DIR"
 mkdir -p "$APP_BUILD_DIR"
 cd "$APP_BUILD_DIR"
 
