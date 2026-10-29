@@ -35,7 +35,7 @@ for script in /etc/init.d/S??*; do
 done
 
 # 내가 만든 프로그램 자동 실행
-/bin/sys_test_app
+/bin/sys_test_app &
 
 # 그 후 기본 콘솔 셸 실행
 exec /bin/sh
