@@ -44,6 +44,29 @@ if [ ! -d "$KERNEL_DIR" ]; then
     fi
 fi
 
+# --------------------------------------------------
+# [변경] CMake를 이용한 사용자 프로그램 빌드 및 이식
+# --------------------------------------------------
+echo "🛠️ [도커 내부] CMake를 이용해 사용자 프로그램 빌드 중..."
+
+# 1. 빌드 결과물이 저장될 rootfs-overlay 내의 bin 폴더 미리 생성
+mkdir -p $HOST_WORKSPACE/rootfs-overlay/bin
+
+# 2. 도커의 가속 공간(/build_fast/app_build)에서 안전하게 컴파일 진행
+mkdir -p /build_fast/app_build
+cd /build_fast/app_build
+
+# 3. 맥북 호스트에 위치한 소스 주소($HOST_WORKSPACE/src/app)를 타겟으로 CMake 구동
+cmake $HOST_WORKSPACE/src/app
+make -j$(nproc)
+
+# 4. 컴파일 완료된 정적 바이너리를 오버레이 폴더로 복사
+#cp sys_test_app $HOST_WORKSPACE/rootfs-overlay/bin/sys_test_app
+
+# 5. 원래 작업 공간으로 복귀
+cd /build_fast
+echo "✅ [도커 내부] CMake 빌드 및 rootfs 이식 완료!"
+
 
 # --------------------------------------------------
 # 램디스크(Minimal RootFS) 기본 구조 생성
