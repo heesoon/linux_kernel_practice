@@ -1,12 +1,27 @@
 #!/bin/sh
 # /etc/init.d/rcK
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 echo "[💻 System] Initiating Graceful Shutdown Sequence..."
 
 # 1. 실행 중인 내 C++ 앱에 명시적으로 SIGTERM(15)을 날려 정상 종료 유도
 killall -15 sys_test_app 2>/dev/null
 
-# 2. 앱이 자원을 정리하고 디버그 메세지를 화면에 출력할 수 있도록 1~2초 대기
+# 2. 앱이 자원을 정리하고 디버그 메세지를 화면에 출력할 수 있도록 2초 대기
 sleep 2
 
-echo "[💻 System] All applications notified. Proceeding to power off."
+echo "[💻 System] All applications notified. Cleaning up remaining processes..."
+
+# 3. /etc/init.d/K??* 스크립트가 있다면 역순으로 종료 수행
+for script in /etc/init.d/K??*; do
+    if [ -x "$script" ]; then
+        $script stop
+    fi
+done
+
+# 4. 시스템 내 남아있는 다른 모든 프로세스 안전하게 종료 (시그널 15 -> 9)
+killall5 -15 2>/dev/null
+sleep 1
+killall5 -9 2>/dev/null
+
+echo "[💻 System] Proceeding to power off."
