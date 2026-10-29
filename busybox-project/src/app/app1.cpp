@@ -21,6 +21,7 @@ int main() {
     // 🛠️ 시스템 시그널 등록 (핸들러 함수 연결)
     std::signal(SIGINT,  signal_handler); // Ctrl + C 처리 (시그널 번호: 2)
     std::signal(SIGTERM, signal_handler); // 일반적인 kill 요청 처리 (시그널 번호: 15)
+    std::signal(SIGUSR2, signal_handler); // 👈 BusyBox poweroff 신호 감지용 추가!
 
     int count = 0;
     
