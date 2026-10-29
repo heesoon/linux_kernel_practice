@@ -9,7 +9,7 @@ export PATH=/sbin:/bin:/usr/sbin:/usr/bin
 # 커널과 소통하고 하드웨어 정보를 얻기 위해 필수적인 가상 디렉터리들을 마운트합니다.
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
-mount -t devtmpfs devtmpfs /dev
+#mount -t devtmpfs devtmpfs /dev
 
 # 3. mdev 실행 (핫플러그 및 디바이스 노드 자동 생성)
 # USB나 SD카드가 꽂혔을 때 /dev 디렉터리에 장치 파일(예: sda1)을 자동으로 만들어줍니다.
