@@ -12,4 +12,4 @@
 # 4. poweroff 명령어 입력 시 실행할 안전한 전원 차단 절차
 ::shutdown:/etc/init.d/rcK
 ::shutdown:/bin/umount -a -r
-::shutdown:/sbin/poweroff -f
+#::shutdown:/sbin/poweroff -f
