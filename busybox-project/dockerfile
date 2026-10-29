@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     libncurses-dev \
     bison \
     flex \
+    cmake \
     libssl-dev \
     libelf-dev \
     bc \
