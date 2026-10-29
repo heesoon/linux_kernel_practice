@@ -1,21 +1,15 @@
-#       [커널 (Kernel)]
-#             │
-#             ▼
-#      [PID 1: /sbin/init (BusyBox)]  ◄── 시스템의 절대자 (모든 관리 주도)
-#             │
-#      ┌──────┴──────┐
-#      ▼             ▼
-#[my_cpp_app]   [디버그용 쉘 (/bin/sh)]
-# (독립 데몬)    (사용자가 접속/exit 반복 가능)
+# /etc/inittab
 
-# 1. 시스템 부팅 시 C++ 앱을 독립된 백그라운드로 실행 (respawn: 죽으면 자동으로 다시 살림)
-#::respawn:/usr/bin/my_cpp_app
+# 1. 시스템 부팅 완료 직후 기초 마운트 스크립트 실행
+::sysinit:/etc/init.d/rcS
+
+# 2. C++ 앱을 독립된 백그라운드로 실행 (죽으면 자동으로 다시 살림)
 ::respawn:/bin/sys_test_app
 
-# 2. 디버그용 콘솔/쉘 실행 (askfirst: 엔터를 치면 쉘 진입, exit 치면 쉘만 리셋됨)
+# 3. 디버그용 콘솔/쉘 실행 (엔터를 치면 진입, exit 치면 이 쉘만 리셋됨)
 ::askfirst:-/bin/sh
 
-# 3. poweroff 명령어 입력 시 실행할 안전한 종료 절차 (rcK 스크립트 호출)
+# 4. poweroff 명령어 입력 시 실행할 안전한 전원 차단 절차
 ::shutdown:/etc/init.d/rcK
 ::shutdown:/bin/umount -a -r
 ::shutdown:/sbin/poweroff -f
